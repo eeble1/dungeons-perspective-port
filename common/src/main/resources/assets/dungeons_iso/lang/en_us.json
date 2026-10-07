@@ -1,5 +1,6 @@
 {
   "dungeons_iso.binds.category": "§6Dungeons Perspective",
+  "key.category.dungeons_iso.binds": "§6Dungeons Perspective",
   "dungeons_iso.binds.toggle": "Toggle perspective",
   "dungeons_iso.binds.moveCamera": "Move camera",
   "dungeons_iso.binds.zoomIn": "Zoom in",

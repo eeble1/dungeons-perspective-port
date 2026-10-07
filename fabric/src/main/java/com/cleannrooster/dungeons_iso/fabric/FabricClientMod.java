@@ -20,6 +20,7 @@ public class FabricClientMod implements ClientModInitializer {
         FabricTerrainCullingModels.register();
 
         // Create key bindings then register them with Fabric's KeyBindingHelper
+        KeyBinding.Category.create(ClientInit.CATEGORY.id());
         ClientInit.registerKeyBindings();
         for (KeyBinding binding : ClientInit.getAllKeyBindings()) {
             KeyBindingHelper.registerKeyBinding(binding);

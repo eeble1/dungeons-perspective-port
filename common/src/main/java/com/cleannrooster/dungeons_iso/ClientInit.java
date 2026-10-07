@@ -2,8 +2,12 @@ package com.cleannrooster.dungeons_iso;
 
 
 import com.cleannrooster.dungeons_iso.config.Config;
+import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.option.KeyBinding;
+import net.minecraft.util.Identifier;
 import net.minecraft.client.render.VertexConsumer;
+import net.minecraft.client.render.VertexRendering;
+import net.minecraft.util.math.ColorHelper;
 import net.minecraft.client.util.InputUtil;
 import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.util.math.MathHelper;
@@ -35,6 +39,14 @@ public class ClientInit {
      * Called during NeoForge's RegisterKeyMappingsEvent and from Fabric's onInitializeClient.
      * Does NOT call any platform-specific registration API — see getAllKeyBindings().
      */
+    /**
+     * Shown in the controls screen as {@code key.category.dungeons_iso.binds}. Each loader registers
+     * it its own way (vanilla's list on Fabric, RegisterKeyMappingsEvent on NeoForge), so it is
+     * only constructed here.
+     */
+    public static final KeyBinding.Category CATEGORY =
+            new KeyBinding.Category(Identifier.of("dungeons_iso", "binds"));
+
     public static void registerKeyBindings() {
         // Unbound by default: a support tool, not a feature, and claiming a key in a modpack
         // invites a clash. Still listed in the controls screen for anyone who wants it.
@@ -42,97 +54,97 @@ public class ClientInit {
                 "dungeons_iso.binds.cullDebug",
                 InputUtil.Type.KEYSYM,
                 InputUtil.UNKNOWN_KEY.getCode(),
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         toggleBinding = new KeyBinding(
                 "dungeons_iso.binds.toggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_F4,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         isoBinding = new KeyBinding(
                 "dungeons_iso.binds.iso",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_HOME,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         moveCameraBinding = new KeyBinding(
                 "dungeons_iso.binds.moveCamera",
                 InputUtil.Type.MOUSE,
                 GLFW.GLFW_MOUSE_BUTTON_3,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         lockOn = new KeyBinding(
                 "dungeons_iso.binds.lockOn",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_H,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         verticalBinding = new KeyBinding(
                 "dungeons_iso.binds.verticalBinding",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT_ALT,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         clickToMove = new KeyBinding(
                 "dungeons_iso.binds.clickToMove",
                 InputUtil.Type.MOUSE,
                 InputUtil.UNKNOWN_KEY.getCode(),
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         zoomInBinding = new KeyBinding(
                 "dungeons_iso.binds.zoomIn",
                 InputUtil.Type.MOUSE,
                 GLFW.GLFW_KEY_UP,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         zoomOutBinding = new KeyBinding(
                 "dungeons_iso.binds.zoomOut",
                 InputUtil.Type.MOUSE,
                 GLFW.GLFW_KEY_DOWN,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         rotateToggle = new KeyBinding(
                 "dungeons_iso.binds.rotateToggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_DELETE,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         rotateClockwise = new KeyBinding(
                 "dungeons_iso.binds.rotateClockwise",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_RIGHT,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         interact = new KeyBinding(
                 "dungeons_iso.binds.interact",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_G,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         rotateCounterClockwise = new KeyBinding(
                 "dungeons_iso.binds.rotateCounterClockwise",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_LEFT,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         contextToggleBinding = new KeyBinding(
                 "dungeons_iso.binds.dynCameraToggle",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_END,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         cycleTargetBinding = new KeyBinding(
                 "dungeons_iso.binds.cycleTargetBinding",
                 InputUtil.Type.MOUSE,
                 GLFW.GLFW_MOUSE_BUTTON_4,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
         openLootMenu = new KeyBinding(
                 "dungeons_iso.binds.openLootMenu",
                 InputUtil.Type.KEYSYM,
                 GLFW.GLFW_KEY_Z,
-                "dungeons_iso.binds.category"
+                CATEGORY
         );
     }
 
@@ -163,17 +175,8 @@ public class ClientInit {
     }
 
     public static void drawCuboidShapeOutline(MatrixStack matrices, VertexConsumer vertexConsumer, VoxelShape shape, double offsetX, double offsetY, double offsetZ, float red, float green, float blue, float alpha) {
-        MatrixStack.Entry entry = matrices.peek();
-        shape.forEachEdge((minX, minY, minZ, maxX, maxY, maxZ) -> {
-            float k = (float)(maxX - minX);
-            float l = (float)(maxY - minY);
-            float m = (float)(maxZ - minZ);
-            float n = MathHelper.sqrt(k * k + l * l + m * m);
-            k /= n;
-            l /= n;
-            m /= n;
-            vertexConsumer.vertex(entry, (float)(minX + offsetX), (float)(minY + offsetY), (float)(minZ + offsetZ)).color(red, green, blue, alpha).normal(entry, k, l, m);
-            vertexConsumer.vertex(entry, (float)(maxX + offsetX), (float)(maxY + offsetY), (float)(maxZ + offsetZ)).color(red, green, blue, alpha).normal(entry, k, l, m);
-        });
+        VertexRendering.drawOutline(matrices, vertexConsumer, shape, offsetX, offsetY, offsetZ,
+                ColorHelper.fromFloats(alpha, red, green, blue),
+                MinecraftClient.getInstance().getWindow().getMinimumLineWidth());
     }
 }

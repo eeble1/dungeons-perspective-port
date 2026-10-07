@@ -15,7 +15,7 @@ logoFile = "assets/dungeons_iso/icon.png"
 [[dependencies.dungeons_iso]]
 modId = "neoforge"
 type = "required"
-versionRange = "[21.1,)"
+versionRange = "[21.11,)"
 ordering = "NONE"
 side = "BOTH"
 

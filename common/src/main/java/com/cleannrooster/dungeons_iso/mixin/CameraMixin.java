@@ -15,6 +15,7 @@ import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.BlockView;
 import net.minecraft.world.RaycastContext;
 import org.joml.Vector3f;
+import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -37,7 +38,7 @@ public abstract class CameraMixin implements CameraAccessor {
 
 
     @Shadow
-    private BlockView area;
+    private World area;
 
     @Shadow
     private  Vector3f horizontalPlane;
@@ -93,6 +94,15 @@ public abstract class CameraMixin implements CameraAccessor {
         }
     }
 
+    /** 1.21.2+ has a separate (ordinal 0) branch for experimental minecarts; this is the normal one. */
+    @ModifyArgs(
+            method = "update",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;setRotation(FF)V", ordinal = 1)
+    )
+    public void aNormal(Args args) {
+        a(args);
+    }
+
     @ModifyArgs(
             method = "update",
             at = @At(value = "INVOKE", target = "Lnet/minecraft/client/render/Camera;clipToSpace(F)F", ordinal = 0)
@@ -128,8 +138,8 @@ public abstract class CameraMixin implements CameraAccessor {
             Vec3d vec2 = (new Vec3d(this.pos.x + (double)vector3f.x, this.pos.y + (double)vector3f.y, this.pos.z + (double)vector3f.z));
 
             Mod.preMod = vec;
-            BlockHitResult result = MinecraftClient.getInstance().cameraEntity.getWorld().raycast(new RaycastContext(MinecraftClient.getInstance().cameraEntity.getEyePos(), vec, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, MinecraftClient.getInstance().cameraEntity));
-            Mod.hit = this.area.raycast(new RaycastContext(MinecraftClient.getInstance().cameraEntity.getEyePos(),vec2, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, MinecraftClient.getInstance().cameraEntity));
+            BlockHitResult result = MinecraftClient.getInstance().getCameraEntity().getEntityWorld().raycast(new RaycastContext(MinecraftClient.getInstance().getCameraEntity().getEyePos(), vec, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, MinecraftClient.getInstance().getCameraEntity()));
+            Mod.hit = this.area.raycast(new RaycastContext(MinecraftClient.getInstance().getCameraEntity().getEyePos(),vec2, RaycastContext.ShapeType.VISUAL, RaycastContext.FluidHandling.NONE, MinecraftClient.getInstance().getCameraEntity()));
 
             if (result.getType().equals(HitResult.Type.BLOCK) ) {
                 Mod.isBlocked = true;
@@ -193,7 +203,7 @@ public abstract class CameraMixin implements CameraAccessor {
             at = @At(value = "HEAD"),
             cancellable = true
     )
-    private void updateXIVHead(BlockView area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta,CallbackInfo ci) {
+    private void updateXIVHead(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta,CallbackInfo ci) {
             if( focusedEntity==  null){
             ci.cancel();
         }
@@ -222,7 +232,7 @@ public abstract class CameraMixin implements CameraAccessor {
 
                 MinecraftClient client = MinecraftClient.getInstance();
                 assert client.player != null;
-                float tickDelta = client.gameRenderer.getCamera().getLastTickDelta();
+                float tickDelta = client.gameRenderer.getCamera().getLastTickProgress();
 
                 Vec3d movement = client.player.getMovement().subtract(0,client.player.getMovement().getY(),0).multiply(5.5).multiply(1+2*Mod.zoom);
 
@@ -284,11 +294,11 @@ public abstract class CameraMixin implements CameraAccessor {
             at = @At(value = "TAIL"),
             cancellable = true
     )
-    public void updateXIV(BlockView area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo info) {
+    public void updateXIV(World area, Entity focusedEntity, boolean thirdPerson, boolean inverseView, float tickDelta, CallbackInfo info) {
         Camera camera = (Camera)  (Object) this;
         if (!Mod.enabled && Config.GSON.instance().dynamicCamera && focusedEntity != null) {
 
-            vec3d = MinecraftClient.getInstance().cameraEntity.getEyePos();
+            vec3d = MinecraftClient.getInstance().getCameraEntity().getEyePos();
         }
 
     }

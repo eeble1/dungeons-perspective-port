@@ -31,7 +31,7 @@ public final class VanillaRebuildScheduler implements ChunkRebuildScheduler {
 
         try {
             for (int[] offset : NEIGHBOURS) {
-                renderer.scheduleBlockRender(
+                renderer.scheduleChunkRender(
                         sectionX + offset[0], sectionY + offset[1], sectionZ + offset[2]);
             }
         } catch (Throwable ignored) {

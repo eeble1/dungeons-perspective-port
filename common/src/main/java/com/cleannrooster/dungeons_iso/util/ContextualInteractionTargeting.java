@@ -82,12 +82,12 @@ public final class ContextualInteractionTargeting {
             BlockPos previousTarget,
             TargetingInputMode inputMode
     ) {
-        if (player == null || player.getWorld() == null) {
+        if (player == null || player.getEntityWorld() == null) {
             reset();
             return null;
         }
 
-        World world = player.getWorld();
+        World world = player.getEntityWorld();
         double range = player.getBlockInteractionRange();
         Vec3d center_player = player.getBoundingBox().getCenter().add(player.getRotationVector().multiply(player.getWidth()*0.5F));
 
@@ -384,7 +384,7 @@ public final class ContextualInteractionTargeting {
      * directly visible.
      */
     public static BlockHitResult resolveHit(ClientPlayerEntity player, BlockPos pos) {
-        World world = player.getWorld();
+        World world = player.getEntityWorld();
         Vec3d eye = player.getEyePos();
         BlockHitResult best = null;
         double bestDist = Double.MAX_VALUE;

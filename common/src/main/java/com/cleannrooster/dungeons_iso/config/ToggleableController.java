@@ -85,6 +85,7 @@ public class ToggleableController<T> implements Controller<T> {
             this.inner.render(graphics, mouseX, mouseY, delta);
             this.tooltip.setTooltip(Tooltip.of(this.control.tickBoxTooltipFunction.get()));
             this.tooltip.render(
+                    graphics, mouseX, mouseY,
                     this.tickBox.isMouseOver(mouseX, mouseY),
                     this.tickBox.isFocused(),
                     this.tickBox.getNavigationFocus()

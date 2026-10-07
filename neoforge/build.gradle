@@ -44,15 +44,7 @@ dependencies {
     // Cloth Config - neoforge
     modImplementation "me.shedaniel.cloth:cloth-config-${platform}:${rootProject.cloth_config_version}"
 
-    // owo-lib - neoforge
-    modImplementation "maven.modrinth:owo-lib:${rootProject.owo_neo_version}"
-
-    // Player Animation Library - forge
-    modImplementation "dev.kosmx.player-anim:player-animation-lib-forge:${rootProject.player_anim_version}"
-
-    // Spell Engine & Spell Power - neoforge (optional compat)
-    modCompileOnly "maven.modrinth:spell-engine:${rootProject.spell_engine_version}-neoforge"
-    modCompileOnly "maven.modrinth:spell-power:${rootProject.spell_power_version}-neoforge"
+    // owo-lib has no NeoForge build for 1.21.11; the owo screens are optional and skipped without it.
 
     // Sodium - neoforge (optional compat, conditional via MixinPlugin)
     modCompileOnly "maven.modrinth:sodium:${rootProject.sodium_version}-neoforge"

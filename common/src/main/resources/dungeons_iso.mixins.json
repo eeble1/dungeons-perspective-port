@@ -19,7 +19,7 @@
     "SoundSystemMixin",
     "AbstractHorseEntityMixin",
     "LightmapTextureManagerMixin",
-    "BackgroundRendererMixin",
+    "FogRendererMixin",
     "ChunkRendererRegionMixin",
     "KeyBindingMixin",
     "WorldRendererMixin"
