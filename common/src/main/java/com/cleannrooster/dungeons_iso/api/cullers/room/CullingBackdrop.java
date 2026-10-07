@@ -36,13 +36,13 @@ public final class CullingBackdrop {
     public static void update() {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientWorld world = client.world;
-        if (!Mod.enabled || world == null || client.cameraEntity == null || !hasRemovedTerrain()) {
+        if (!Mod.enabled || world == null || client.getCameraEntity() == null || !hasRemovedTerrain()) {
             enclosed = false;
             approach(false);
             return;
         }
 
-        BlockPos origin = client.cameraEntity.getBlockPos();
+        BlockPos origin = client.getCameraEntity().getBlockPos();
         int covered = 0;
         for (int[] offset : SAMPLE_OFFSETS) {
             if (!world.isSkyVisible(origin.add(offset[0], 1, offset[1]))) {

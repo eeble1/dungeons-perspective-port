@@ -13,11 +13,13 @@ import com.cleannrooster.dungeons_iso.mixin.GameRendererAccessor;
 import net.minecraft.client.render.Camera;
 import net.minecraft.client.render.GameRenderer;
 import net.minecraft.client.render.OverlayTexture;
-import net.minecraft.client.render.RenderLayer;
 import net.minecraft.client.render.VertexConsumer;
 import net.minecraft.client.render.VertexConsumerProvider;
 import net.minecraft.client.render.WorldRenderer;
-import net.minecraft.client.render.model.BakedModel;
+import net.minecraft.client.render.RenderLayers;
+import net.minecraft.client.render.model.BlockModelPart;
+import net.minecraft.client.render.model.BlockStateModel;
+import net.minecraft.client.util.math.Vector2f;
 import net.minecraft.client.render.model.BakedQuad;
 import net.minecraft.client.texture.SpriteAtlasTexture;
 import net.minecraft.client.util.math.MatrixStack;
@@ -117,7 +119,7 @@ public final class GhostRenderer {
 
         MinecraftClient client = MinecraftClient.getInstance();
         ClientWorld world = client.world;
-        if (world == null || client.cameraEntity == null) {
+        if (world == null || client.getCameraEntity() == null) {
             invalidate();
             return;
         }
@@ -154,10 +156,10 @@ public final class GhostRenderer {
         // loudly — it silently drops the perspective divide, leaving a "screen distance" that is
         // really a camera-space offset in blocks and a pocket whose shape swims with camera yaw.
         MatrixStack.Entry entry = matrices.peek();
-        Vec3d cameraPos = camera.getPos();
+        Vec3d cameraPos = camera.getCameraPos();
         Projector projector = new Projector(camera, gameRenderer);
 
-        Vec3d focus = client.cameraEntity.getBoundingBox().getCenter();
+        Vec3d focus = client.getCameraEntity().getBoundingBox().getCenter();
         float[] screen = new float[2];
         if (!projector.project(focus.x, focus.y, focus.z, cameraPos, screen)) {
             // The player is behind the camera; nothing sensible to measure against.
@@ -168,7 +170,7 @@ public final class GhostRenderer {
         lastVertexCount = vertexCount;
 
         VertexConsumer consumer = buffers.getBuffer(
-                RenderLayer.getEntityTranslucent(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE));
+                RenderLayers.entityTranslucent(SpriteAtlasTexture.BLOCK_ATLAS_TEXTURE));
 
         double offX = originX - cameraPos.x;
         double offY = originY - cameraPos.y;
@@ -316,7 +318,7 @@ public final class GhostRenderer {
 
         // Origin is the camera entity's block, so stored offsets stay small and float precision
         // holds up at far-flung world coordinates.
-        Vec3d anchor = client.cameraEntity != null ? client.cameraEntity.getPos() : Vec3d.ZERO;
+        Vec3d anchor = client.getCameraEntity() != null ? client.getCameraEntity().getEntityPos() : Vec3d.ZERO;
         originX = Math.floor(anchor.x);
         originY = Math.floor(anchor.y);
         originZ = Math.floor(anchor.z);
@@ -368,8 +370,10 @@ public final class GhostRenderer {
                 return;
             }
 
-            BakedModel model = this.client.getBlockRenderManager().getModel(state);
+            BlockStateModel model = this.client.getBlockRenderManager().getModel(state);
             long seed = state.getRenderingSeed(this.pos);
+            RANDOM.setSeed(seed);
+            List<BlockModelPart> parts = model.getParts(RANDOM);
 
             for (Direction dir : Direction.values()) {
                 this.neighbour.set(x + dir.getOffsetX(), y + dir.getOffsetY(), z + dir.getOffsetZ());
@@ -378,7 +382,7 @@ public final class GhostRenderer {
                 // Vanilla's own visibility test, against the unmodified world: a face buried
                 // between two solid blocks was never drawn, so ghosting it would add a layer of
                 // alpha that was never in the original image.
-                if (!Block.shouldDrawSide(state, this.world, this.pos, dir, this.neighbour)) {
+                if (!Block.shouldDrawSide(state, this.world.getBlockState(this.neighbour), dir)) {
                     continue;
                 }
                 // And only the outer boundary of what was removed. Faces onto other removed blocks
@@ -389,15 +393,17 @@ public final class GhostRenderer {
                         this.neighbour.getX(), this.neighbour.getY(), this.neighbour.getZ())) {
                     continue;
                 }
-                RANDOM.setSeed(seed);
-                emit(state, model.getQuads(state, dir, RANDOM), x, y, z,
-                        WorldRenderer.getLightmapCoordinates(this.world, this.neighbour));
+                int faceLight = WorldRenderer.getLightmapCoordinates(this.world, this.neighbour);
+                for (int p = 0; p < parts.size(); p++) {
+                    emit(state, parts.get(p).getQuads(dir), x, y, z, faceLight);
+                }
             }
 
             // Direction-less quads belong to no face and are always drawn.
-            RANDOM.setSeed(seed);
-            emit(state, model.getQuads(state, null, RANDOM), x, y, z,
-                    WorldRenderer.getLightmapCoordinates(this.world, this.pos));
+            int ownLight = WorldRenderer.getLightmapCoordinates(this.world, this.pos);
+            for (int p = 0; p < parts.size(); p++) {
+                emit(state, parts.get(p).getQuads(null), x, y, z, ownLight);
+            }
         }
 
         private void emit(BlockState state, List<BakedQuad> quads, int bx, int by, int bz, int light) {
@@ -406,10 +412,7 @@ public final class GhostRenderer {
                     return;
                 }
                 BakedQuad quad = quads.get(q);
-                int[] data = quad.getVertexData();
-                int stride = data.length / 4;
-
-                Direction face = quad.getFace();
+                Direction face = quad.face();
                 float nx = face.getOffsetX();
                 float ny = face.getOffsetY();
                 float nz = face.getOffsetZ();
@@ -419,37 +422,36 @@ public final class GhostRenderer {
                 // this tint per quad; without it the ghost desaturates exactly the blocks people
                 // notice most.
                 float tintR = 1.0F, tintG = 1.0F, tintB = 1.0F;
-                if (quad.hasColor()) {
+                if (quad.hasTint()) {
                     int rgb = this.client.getBlockColors()
-                            .getColor(state, this.world, this.pos, quad.getColorIndex());
+                            .getColor(state, this.world, this.pos, quad.tintIndex());
                     tintR = ((rgb >> 16) & 0xFF) / 255.0F;
                     tintG = ((rgb >> 8) & 0xFF) / 255.0F;
                     tintB = (rgb & 0xFF) / 255.0F;
                 }
                 // Directional shading, the same top-bright/side-dark falloff the chunk mesh gets.
                 // Without it the ghost is flat and reads as a decal rather than as the world.
-                float shade = this.world.getBrightness(face, quad.hasShade());
+                float shade = this.world.getBrightness(face, quad.shade());
                 tintR *= shade;
                 tintG *= shade;
                 tintB *= shade;
 
                 for (int i = 0; i < 4; i++) {
-                    int o = i * stride;
-                    this.verts.add((float) (bx + Float.intBitsToFloat(data[o]) - originX));
-                    this.verts.add((float) (by + Float.intBitsToFloat(data[o + 1]) - originY));
-                    this.verts.add((float) (bz + Float.intBitsToFloat(data[o + 2]) - originZ));
-                    this.verts.add(Float.intBitsToFloat(data[o + 4]));
-                    this.verts.add(Float.intBitsToFloat(data[o + 5]));
+                    org.joml.Vector3fc position = quad.getPosition(i);
+                    long uv = quad.getTexcoords(i);
+                    this.verts.add((float) (bx + position.x() - originX));
+                    this.verts.add((float) (by + position.y() - originY));
+                    this.verts.add((float) (bz + position.z() - originZ));
+                    this.verts.add(Vector2f.getX(uv));
+                    this.verts.add(Vector2f.getY(uv));
                     this.verts.add(nx);
                     this.verts.add(ny);
                     this.verts.add(nz);
 
-                    // The quad's own baked vertex colour is packed little-endian, red in the low
-                    // byte — the order vanilla reads it back in.
-                    int packed = data[o + 3];
-                    this.verts.add((packed & 0xFF) / 255.0F * tintR);
-                    this.verts.add(((packed >> 8) & 0xFF) / 255.0F * tintG);
-                    this.verts.add(((packed >> 16) & 0xFF) / 255.0F * tintB);
+                    // Baked quads no longer carry a per-vertex colour; only the tint and shade apply.
+                    this.verts.add(tintR);
+                    this.verts.add(tintG);
+                    this.verts.add(tintB);
 
                     this.lights.add(light);
                 }
@@ -491,7 +493,7 @@ public final class GhostRenderer {
                 this.scale = Math.max(1.0E-4, Mod.getZoom() * 2.0);
             } else {
                 double fov = ((GameRendererAccessor) gameRenderer)
-                        .callGetFov(camera, camera.getLastTickDelta(), true);
+                        .callGetFov(camera, camera.getLastTickProgress(), true);
                 this.scale = Math.max(1.0E-4, Math.tan(Math.toRadians(fov) / 2.0));
             }
         }

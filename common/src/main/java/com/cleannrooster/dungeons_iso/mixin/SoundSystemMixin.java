@@ -28,7 +28,7 @@ public class SoundSystemMixin {
         if (!Mod.enabled || !started || !camera.isReady()) return;
         MinecraftClient client = MinecraftClient.getInstance();
         if (client.player == null) return;
-        var pt = camera.getPos().add(client.player.getEyePos().subtract(camera.getPos()).multiply(Config.GSON.instance().soundListenerBias));
+        var pt = camera.getCameraPos().add(client.player.getEyePos().subtract(camera.getCameraPos()).multiply(Config.GSON.instance().soundListenerBias));
         taskQueue.execute(() -> listener.setTransform(new SoundListenerTransform(
                 pt,
                 Vec3d.fromPolar(0,  camera.getYaw()),

@@ -13,7 +13,7 @@ import net.neoforged.fml.event.lifecycle.FMLClientSetupEvent;
 import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
 import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
 
-@EventBusSubscriber(modid = "dungeons_iso", bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "dungeons_iso", value = Dist.CLIENT)
 public class NeoForgeClientMod {
 
     /**
@@ -24,6 +24,7 @@ public class NeoForgeClientMod {
     @SubscribeEvent
     public static void onRegisterKeyMappings(RegisterKeyMappingsEvent event) {
         ClientInit.registerKeyBindings();
+        event.registerCategory(ClientInit.CATEGORY);
         for (KeyBinding binding : ClientInit.getAllKeyBindings()) {
             event.register(binding);
         }
@@ -36,7 +37,7 @@ public class NeoForgeClientMod {
 }
 
 /** Separate subscriber on the FORGE bus for game-phase events (commands). */
-@EventBusSubscriber(modid = "dungeons_iso", bus = EventBusSubscriber.Bus.GAME, value = Dist.CLIENT)
+@EventBusSubscriber(modid = "dungeons_iso", value = Dist.CLIENT)
 class NeoForgeClientGameEvents {
 
     @SubscribeEvent

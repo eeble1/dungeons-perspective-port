@@ -71,12 +71,12 @@ public class Mod {
         if (MinecraftClient.getInstance().world != null) {
 
             if (bool) {
-                modifier = (Math.min(2F, ((float) 1F + ((DragonCompat.bool ? (float) (Math.max(0F, (float) MinecraftClient.getInstance().world.getTime() - (float) Mod.dragonTimeSince + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickDelta())) : Math.max(0F, 20F - (float) MinecraftClient.getInstance().world.getTime() + (float) Mod.dragonTime + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickDelta()))) / 20F)))  * Math.clamp(Config.GSON.instance().zoomFactor, 1F, 1.5F) * Mod.zoom;
+                modifier = (Math.min(2F, ((float) 1F + ((DragonCompat.bool ? (float) (Math.max(0F, (float) MinecraftClient.getInstance().world.getTime() - (float) Mod.dragonTimeSince + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickProgress())) : Math.max(0F, 20F - (float) MinecraftClient.getInstance().world.getTime() + (float) Mod.dragonTime + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickProgress()))) / 20F)))  * Math.clamp(Config.GSON.instance().zoomFactor, 1F, 1.5F) * Mod.zoom;
 
             } else {
 
                 if (Config.GSON.instance().clipToSpace) {
-                    modifier = (Math.min(2F, ((float) 1F + ((DragonCompat.bool ? (float) (Math.max(0F, (float) MinecraftClient.getInstance().world.getTime() - (float) Mod.dragonTimeSince + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickDelta())) : Math.max(0F, 20F - (float) MinecraftClient.getInstance().world.getTime() + (float) Mod.dragonTime + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickDelta()))) / 20F))) * Math.clamp(Config.GSON.instance().zoomFactor, 1F, 1.5F) * Mod.zoom;
+                    modifier = (Math.min(2F, ((float) 1F + ((DragonCompat.bool ? (float) (Math.max(0F, (float) MinecraftClient.getInstance().world.getTime() - (float) Mod.dragonTimeSince + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickProgress())) : Math.max(0F, 20F - (float) MinecraftClient.getInstance().world.getTime() + (float) Mod.dragonTime + MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickProgress()))) / 20F))) * Math.clamp(Config.GSON.instance().zoomFactor, 1F, 1.5F) * Mod.zoom;
 
                 } else {
                     modifier =  Mod.zoom;
@@ -84,14 +84,14 @@ public class Mod {
                 }
             }
 
-            if (MinecraftClient.getInstance().cameraEntity instanceof LivingEntity living) {
+            if (MinecraftClient.getInstance().getCameraEntity() instanceof LivingEntity living) {
                 modifier *= living.getScale();
             }
         }
         if(Objects.isNull(hit) || !Config.GSON.instance().clipToSpace) {
             return modifier;
         }
-        return (float) Math.max(0.5F*modifier*((Math.clamp((Mod.clipMetric+(Mod.notmoving ? 0 :  Mod.forward ? 0.4F: -1.0F)*MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickDelta()),16,32))/(32)),2F);
+        return (float) Math.max(0.5F*modifier*((Math.clamp((Mod.clipMetric+(Mod.notmoving ? 0 :  Mod.forward ? 0.4F: -1.0F)*MinecraftClient.getInstance().gameRenderer.getCamera().getLastTickProgress()),16,32))/(32)),2F);
     }
 
     public static float zoom = 5.0F;
@@ -162,7 +162,7 @@ public class Mod {
                 || MinecraftClient.getInstance().world.getBlockState(pos).getBlock() instanceof CaveVines
                 || MinecraftClient.getInstance().world.getBlockState(pos).getBlock() instanceof CandleCakeBlock
 
-        ) && MinecraftClient.getInstance().player.getPos().distanceTo(pos.toCenterPos())<
+        ) && MinecraftClient.getInstance().player.getEntityPos().distanceTo(pos.toCenterPos())<
                 MinecraftClient.getInstance().player.getBlockInteractionRange()));
     }
     public static boolean isInteractable(BlockPos result){
@@ -194,10 +194,16 @@ public class Mod {
                 || MinecraftClient.getInstance().world.getBlockState(result).getBlock() instanceof CaveVines
                 || MinecraftClient.getInstance().world.getBlockState(result).getBlock() instanceof CandleCakeBlock
 
-        ) && MinecraftClient.getInstance().player.getPos().distanceTo(result.toCenterPos())<
+        ) && MinecraftClient.getInstance().player.getEntityPos().distanceTo(result.toCenterPos())<
                 MinecraftClient.getInstance().player.getBlockInteractionRange());
     }
     public static int frustrumZoom;
     public static int cooldown;
 
+
+    /** Replacement for the removed ActionResult#shouldSwingHand: vanilla swings on CLIENT-sourced successes. */
+    public static boolean shouldSwingHand(net.minecraft.util.ActionResult result) {
+        return result instanceof net.minecraft.util.ActionResult.Success success
+                && success.swingSource() == net.minecraft.util.ActionResult.SwingSource.CLIENT;
+    }
 }

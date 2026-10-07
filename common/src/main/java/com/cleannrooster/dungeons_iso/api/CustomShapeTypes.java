@@ -14,12 +14,12 @@ public enum CustomShapeTypes implements RaycastContext.ShapeProvider {
 
     CULLED((state, world, pos, context) -> {
         for(BlockCuller culler : SodiumCompat.blockCullersShapes){
-            if(MinecraftClient.getInstance().gameRenderer.getCamera() != null && MinecraftClient.getInstance().cameraEntity != null)
+            if(MinecraftClient.getInstance().gameRenderer.getCamera() != null && MinecraftClient.getInstance().getCameraEntity() != null)
             {
-                if (culler.shouldCull(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().cameraEntity)) {
+                if (culler.shouldCull(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().getCameraEntity())) {
                     return VoxelShapes.empty();
                 }
-                if (culler.shouldIgnoreBlockPick(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().cameraEntity)) {
+                if (culler.shouldIgnoreBlockPick(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().getCameraEntity())) {
                     return VoxelShapes.empty();
                 }
             }
@@ -30,26 +30,26 @@ public enum CustomShapeTypes implements RaycastContext.ShapeProvider {
     }),
     AIR_AT_LEVEL((state, world, pos, context) -> {
         for(BlockCuller culler : SodiumCompat.blockCullersShapes){
-            if(MinecraftClient.getInstance().gameRenderer.getCamera() != null && MinecraftClient.getInstance().cameraEntity != null) {
-                if (culler.shouldCull(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().cameraEntity)) {
+            if(MinecraftClient.getInstance().gameRenderer.getCamera() != null && MinecraftClient.getInstance().getCameraEntity() != null) {
+                if (culler.shouldCull(pos, MinecraftClient.getInstance().gameRenderer.getCamera(), MinecraftClient.getInstance().getCameraEntity())) {
                     return VoxelShapes.empty();
                 }
             }
 
         }
-        if(pos.getY() > MinecraftClient.getInstance().cameraEntity.getY()){
+        if(pos.getY() > MinecraftClient.getInstance().getCameraEntity().getY()){
             return VoxelShapes.empty();
 
         }
         else{
-            return VoxelShapes.cuboid(0,0,0,1,Math.max(0,((MinecraftClient.getInstance().cameraEntity.getY()*16) % 16F)/16F),1);
+            return VoxelShapes.cuboid(0,0,0,1,Math.max(0,((MinecraftClient.getInstance().getCameraEntity().getY()*16) % 16F)/16F),1);
         }
 
     }),
     VERTICAL((state, world, pos, context) -> {
         if(pos.getX()== Mod.horizontalTarget.getBlockPos().getX() || pos.getY() ==Mod.horizontalTarget.getBlockPos().getZ()) {
 
-            return VoxelShapes.cuboid(0, 0, 0, 1, Math.max(0, ((MinecraftClient.getInstance().cameraEntity.getY() * 16) % 16F) / 16F), 1);
+            return VoxelShapes.cuboid(0, 0, 0, 1, Math.max(0, ((MinecraftClient.getInstance().getCameraEntity().getY() * 16) % 16F) / 16F), 1);
         }
         else{
             return VoxelShapes.empty();

@@ -7,6 +7,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import net.minecraft.block.BlockState;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
+import net.minecraft.client.gl.RenderPipelines;
 import net.minecraft.client.render.*;
 import net.minecraft.client.util.Window;
 import net.minecraft.entity.Entity;
@@ -60,7 +61,7 @@ public class FogOfWar {
         res = new Vector2d(window.getFramebufferWidth(), window.getFramebufferHeight());
         double aspect = res.x / res.y;
         double fov2 =
-                Math.toRadians(((GameRendererAccessor) renderer).callGetFov(camera, renderer.getCamera().getLastTickDelta(), true)) / 2.0;
+                Math.toRadians(((GameRendererAccessor) renderer).callGetFov(camera, renderer.getCamera().getLastTickProgress(), true)) / 2.0;
 
         for (int x = 0; x < res.x*1.1; x = (int) (x+res.x/24)) {
             for (int y = 0; y < res.y*1.1; y = (int) (y+res.y/(13.5))){
@@ -75,25 +76,25 @@ public class FogOfWar {
             Vector3d dir = forward.add(right.mul(offsets.x).add(up.mul(offsets.y))).normalize();
             Vector3d orth = camera.getRotation().transform(new Vector3d(0.0, 0.0, -1.0)).normalize();
             Vec3d rayDir = Config.GSON.instance().ortho ? new Vec3d(orth.x, orth.y, orth.z) : new Vec3d(dir.x, dir.y, dir.z);
-                Vec3d end =                             (Config.GSON.instance().ortho ? camera.getPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getPos()).add(rayDir.multiply((1+Mod.getZoom())*Mod.zoomMetric*3F));
+                Vec3d end =                             (Config.GSON.instance().ortho ? camera.getCameraPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getCameraPos()).add(rayDir.multiply((1+Mod.getZoom())*Mod.zoomMetric*3F));
 
-            HitResult hitResult0 = raycast(Config.GSON.instance().ortho ? camera.getPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getPos(),end,new RaycastContextCull(
-                        Config.GSON.instance().ortho ? camera.getPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getPos(),
+            HitResult hitResult0 = raycast(Config.GSON.instance().ortho ? camera.getCameraPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getCameraPos(),end,new RaycastContextCull(
+                        Config.GSON.instance().ortho ? camera.getCameraPos().add(new Vec3d(camera.getDiagonalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.x).multiply(-0.72)).add(new Vec3d(camera.getVerticalPlane()).multiply(Mod.zoomMetric*Mod.getZoom()).multiply(coords.y).multiply(0.72)) :camera.getCameraPos(),
                         end,
 CustomShapeTypes.CULLED,
                     RaycastContext.ShapeType.VISUAL,
                         RaycastContext.FluidHandling.NONE,
                         cameraEntity
                 ),(innerContext, pos) -> {
-                    BlockState blockState = client.player.getWorld().getBlockState(pos);
-                    FluidState fluidState = client.player.getWorld().getFluidState(pos);
+                    BlockState blockState = client.player.getEntityWorld().getBlockState(pos);
+                    FluidState fluidState = client.player.getEntityWorld().getFluidState(pos);
                     Vec3d vec3d = innerContext.getStart();
                     Vec3d vec3d2 = innerContext.getEnd();
-                    VoxelShape voxelShape = innerContext.getBlockShape(blockState, client.player.getWorld(), pos);
+                    VoxelShape voxelShape = innerContext.getBlockShape(blockState, client.player.getEntityWorld(), pos);
                     BlockHitResult firstResult = client.world.raycastBlock(vec3d, vec3d2, pos, voxelShape, blockState);
 
 
-                    VoxelShape voxelShape2 = innerContext.getFluidShape(fluidState, client.player.getWorld(), pos);
+                    VoxelShape voxelShape2 = innerContext.getFluidShape(fluidState, client.player.getEntityWorld(), pos);
                     BlockHitResult blockHitResult2 = voxelShape2.raycast(vec3d, vec3d2, pos);
                     double d = firstResult == null ? Double.MAX_VALUE : innerContext.getStart().squaredDistanceTo(firstResult.getPos());
                     double e = blockHitResult2 == null ? Double.MAX_VALUE : innerContext.getStart().squaredDistanceTo(blockHitResult2.getPos());
@@ -122,8 +123,8 @@ CustomShapeTypes.CULLED,
                     int px = (int)(key >> 32);
                     int py = (int)(key & 0xFFFFFFFFL);
                     Vec3d vec3d = hitResult.getPos();
-                    HitResult result = cameraEntity.getWorld().raycast(new RaycastContext(cameraEntity.getEyePos(), vec3d.add(0,cameraEntity.getEyeHeight(cameraEntity.getPose()),0), RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, cameraEntity));
-                    if ((cameraEntity instanceof LivingEntity living && (BlockCuller.angleBetween(hitResult.getPos().subtract(cameraEntity.getEyePos()),living.getRotationVector()) > 50 || client.getCameraEntity() instanceof LivingEntity livingEntity && livingEntity.hasStatusEffect(DARKNESS)) && hitResult.getPos().distanceTo(living.getEyePos()) >= Mod.getZoom()*2) ||(((result.getPos() != null && cameraEntity.getWorld().getLightLevel(LightType.BLOCK, BlockPos.ofFloored(result.getPos()))+cameraEntity.getWorld().getLightLevel(LightType.SKY, BlockPos.ofFloored(result.getPos())) <= 6) || (!(result instanceof BlockHitResult result1 && result1.getType().equals(HitResult.Type.MISS)))) &&  hitResult.getPos().distanceTo(cameraEntity.getEyePos()) > Mod.getZoom()*2)) {
+                    HitResult result = cameraEntity.getEntityWorld().raycast(new RaycastContext(cameraEntity.getEyePos(), vec3d.add(0,cameraEntity.getEyeHeight(cameraEntity.getPose()),0), RaycastContext.ShapeType.COLLIDER, RaycastContext.FluidHandling.NONE, cameraEntity));
+                    if ((cameraEntity instanceof LivingEntity living && (BlockCuller.angleBetween(hitResult.getPos().subtract(cameraEntity.getEyePos()),living.getRotationVector()) > 50 || client.getCameraEntity() instanceof LivingEntity livingEntity && livingEntity.hasStatusEffect(DARKNESS)) && hitResult.getPos().distanceTo(living.getEyePos()) >= Mod.getZoom()*2) ||(((result.getPos() != null && cameraEntity.getEntityWorld().getLightLevel(LightType.BLOCK, BlockPos.ofFloored(result.getPos()))+cameraEntity.getEntityWorld().getLightLevel(LightType.SKY, BlockPos.ofFloored(result.getPos())) <= 6) || (!(result instanceof BlockHitResult result1 && result1.getType().equals(HitResult.Type.MISS)))) &&  hitResult.getPos().distanceTo(cameraEntity.getEyePos()) > Mod.getZoom()*2)) {
                         realPoints.add(hitResult);
                         points.add(new Vec2f(px, py));
                     }
@@ -136,9 +137,7 @@ CustomShapeTypes.CULLED,
 
 
     public void render(DrawContext context, float delta){
-        context.getMatrices().push();
-        RenderSystem.enableBlend();
-        RenderSystem.defaultBlendFunc();
+        context.getMatrices().pushMatrix();
 
         if(points != null) {
             // Ensure offsets array is large enough
@@ -153,14 +152,13 @@ CustomShapeTypes.CULLED,
                 float a = Math.clamp((float) (offsetsArray[idx] + random.nextGaussian() * -offsetsArray[idx] + random.nextGaussian()), -50, 50);
                 float b = Math.clamp((float) (offsetsArray[idx + 1] + random.nextGaussian() * -offsetsArray[idx + 1] + random.nextGaussian()), -50, 50);
                 var c = window.calculateScaleFactor(client.options.getGuiScale().getValue(),false);
-                context.drawTexture(Identifier.of("dungeons_iso","textures/shader/sample.png"), (int) point.x/c+(int)a/c-150/c, (int) point.y/c+(int)b/c-150/c,0,0,300/c,300/c,300/c,300/c);
+                context.drawTexture(RenderPipelines.GUI_TEXTURED, Identifier.of("dungeons_iso","textures/shader/sample.png"), (int) point.x/c+(int)a/c-150/c, (int) point.y/c+(int)b/c-150/c,0,0,300/c,300/c,300/c,300/c);
 
                 offsetsArray[idx] = a;
                 offsetsArray[idx + 1] = b;
             }
         }
-        RenderSystem.disableBlend();
-        context.getMatrices().pop();
+        context.getMatrices().popMatrix();
 
 
     }

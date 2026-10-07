@@ -93,7 +93,7 @@ public final class ChunkView {
             return null;
         }
         return new ChunkView(chunks, minChunkX, minChunkZ, sizeX, sizeZ,
-                world.getBottomY(), world.getTopY());
+                world.getBottomY(), world.getTopYInclusive() + 1);
     }
 
     /** Returns {@link #SOLID}, {@link #PASSABLE} or {@link #UNKNOWN} for the given block. */

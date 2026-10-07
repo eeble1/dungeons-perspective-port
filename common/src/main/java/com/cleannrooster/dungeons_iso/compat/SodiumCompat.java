@@ -124,7 +124,7 @@ public class SodiumCompat {
     private static void tickRoomScanner() {
         MinecraftClient client = MinecraftClient.getInstance();
         ClientWorld world = client.world;
-        Entity cameraEntity = client.cameraEntity;
+        Entity cameraEntity = client.getCameraEntity();
         if (world == null || cameraEntity == null) {
             return;
         }
@@ -201,7 +201,7 @@ public class SodiumCompat {
         if (camera == null || camera.equals(Vec3d.ZERO)) {
             return;
         }
-        double distance = camera.distanceTo(cameraEntity.getPos());
+        double distance = camera.distanceTo(cameraEntity.getEntityPos());
         if (distance < 1.0 || distance > 128.0) {
             return;
         }

@@ -7,6 +7,7 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.effect.StatusEffects;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.MathHelper;
+import com.llamalad7.mixinextras.injector.ModifyExpressionValue;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
@@ -18,15 +19,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 public  class LightmapTextureManagerMixin  {
 
 
-    @Inject(
-            method = "getDarknessFactor",
-            at = @At(value = "RETURN"),
-            cancellable = true
+    // 1.21.11 inlined the old getDarknessFactor(float) as LivingEntity#getEffectFadeFactor.
+    @ModifyExpressionValue(
+            method = "update",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/client/network/ClientPlayerEntity;getEffectFadeFactor(Lnet/minecraft/registry/entry/RegistryEntry;F)F")
     )
-    private  void getDarknessFactorFOG(float delta, CallbackInfoReturnable<Float> cir) {
-        if(Mod.enabled  && MinecraftClient.getInstance().cameraEntity != null && MinecraftClient.getInstance().cameraEntity instanceof LivingEntity player && player.hasStatusEffect(StatusEffects.DARKNESS)) {
-            cir.setReturnValue(0F);
+    private float getDarknessFactorFOG(float original) {
+        if(Mod.enabled  && MinecraftClient.getInstance().getCameraEntity() != null && MinecraftClient.getInstance().getCameraEntity() instanceof LivingEntity player && player.hasStatusEffect(StatusEffects.DARKNESS)) {
+            return 0F;
         }
+        return original;
     }
     @Inject(
             method = "getDarkness",
@@ -34,7 +36,7 @@ public  class LightmapTextureManagerMixin  {
             cancellable = true
     )
     private void getDarknessFOG(LivingEntity entity, float factor, float delta, CallbackInfoReturnable<Float> cir) {
-        if(Mod.enabled && MinecraftClient.getInstance().cameraEntity != null && MinecraftClient.getInstance().cameraEntity instanceof LivingEntity player && player.hasStatusEffect(StatusEffects.DARKNESS) ) {
+        if(Mod.enabled && MinecraftClient.getInstance().getCameraEntity() != null && MinecraftClient.getInstance().getCameraEntity() instanceof LivingEntity player && player.hasStatusEffect(StatusEffects.DARKNESS) ) {
             cir.setReturnValue(1F);
         }
     }

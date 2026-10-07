@@ -37,30 +37,30 @@ public class GenericBlockCuller implements BlockCuller {
             return false;
         }
 
-        if (isIgnoredType(cameraEntity.getWorld().getBlockState(blockPos).getBlock())) {
+        if (isIgnoredType(cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock())) {
             return false;
         }
 
         Vec3d blockCenter = blockPos.toCenterPos();
-        Vec3d entityPos = cameraEntity.getPos();
-        Vec3d cameraPos = camera.getPos();
+        Vec3d entityPos = cameraEntity.getEntityPos();
+        Vec3d cameraPos = camera.getCameraPos();
 
         if (blockCenter.getY() <= entityPos.getY() + 1) {
             return false;
         }
 
         Vec3d toBlock = entityPos.subtract(blockCenter).normalize();
-        Vec3d toCamera = MinecraftClient.getInstance().cameraEntity.getPos().subtract(cameraPos).normalize();
+        Vec3d toCamera = MinecraftClient.getInstance().getCameraEntity().getEntityPos().subtract(cameraPos).normalize();
 
         if (toBlock.dotProduct(toCamera) > 0.71 || cameraPos.distanceTo(blockCenter) < 3) {
-            return !cameraEntity.getWorld().getBlockState(blockPos).getBlock().equals(Blocks.AIR);
+            return !cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock().equals(Blocks.AIR);
         }
         return false;
     }
 
     @Override
     public boolean shouldIgnoreBlockPick(BlockPos blockPos, Camera camera, Entity cameraEntity) {
-        if (blockPos == null || isIgnoredType(cameraEntity.getWorld().getBlockState(blockPos).getBlock())) {
+        if (blockPos == null || isIgnoredType(cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock())) {
             return false;
         }
 
@@ -68,7 +68,7 @@ public class GenericBlockCuller implements BlockCuller {
         if (cameraEntity instanceof net.minecraft.entity.player.PlayerEntity player
                 && blockCenter.distanceTo(cameraEntity.getEyePos()) > player.getBlockInteractionRange()
                 && blockCenter.getY() > cameraEntity.getY() + 1) {
-            return UP.dotProduct(blockCenter.subtract(cameraEntity.getPos()).normalize()) > 0.5F;
+            return UP.dotProduct(blockCenter.subtract(cameraEntity.getEntityPos()).normalize()) > 0.5F;
         }
         return false;
     }

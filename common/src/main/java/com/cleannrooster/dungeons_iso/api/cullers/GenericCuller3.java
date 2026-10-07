@@ -67,7 +67,7 @@ public class GenericCuller3 implements BlockCuller {
      */
     private static double getAnimatedRadius(Entity cameraEntity) {
         double animFactor = 0.1 * Math.min(10, Math.min(
-                cameraEntity.getWorld().getTime() - Mod.startTime + 2,
+                cameraEntity.getEntityWorld().getTime() - Mod.startTime + 2,
                 10 - Mod.endTime));
         return animFactor * Config.GSON.instance().cullAngle;
     }
@@ -101,7 +101,7 @@ public class GenericCuller3 implements BlockCuller {
         Vec3d blockCenter = blockPos.toCenterPos();
         Vec3d fromCenter = fromPos.toCenterPos();
 
-        if (isIgnoredType(cameraEntity.getWorld().getBlockState(blockPos).getBlock())) {
+        if (isIgnoredType(cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock())) {
             return false;
         }
 
@@ -132,9 +132,9 @@ public class GenericCuller3 implements BlockCuller {
         }
 
         Vec3d blockCenter = blockPos.toCenterPos();
-        Vec3d entityPos = cameraEntity.getPos();
+        Vec3d entityPos = cameraEntity.getEntityPos();
 
-        if (isIgnoredType(cameraEntity.getWorld().getBlockState(blockPos).getBlock())) {
+        if (isIgnoredType(cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock())) {
             return false;
         }
 
@@ -161,7 +161,7 @@ public class GenericCuller3 implements BlockCuller {
 
     @Override
     public boolean shouldIgnoreBlockPick(BlockPos blockPos, Camera camera, Entity cameraEntity) {
-        if (blockPos == null || isIgnoredType(cameraEntity.getWorld().getBlockState(blockPos).getBlock())) {
+        if (blockPos == null || isIgnoredType(cameraEntity.getEntityWorld().getBlockState(blockPos).getBlock())) {
             return false;
         }
 
@@ -169,7 +169,7 @@ public class GenericCuller3 implements BlockCuller {
         if (cameraEntity instanceof PlayerEntity player
                 && blockCenter.distanceTo(cameraEntity.getEyePos()) > player.getBlockInteractionRange()
                 && blockCenter.getY() > cameraEntity.getY() + 1) {
-            return UP.dotProduct(blockCenter.subtract(cameraEntity.getPos()).normalize()) > 0.5F;
+            return UP.dotProduct(blockCenter.subtract(cameraEntity.getEntityPos()).normalize()) > 0.5F;
         }
         return false;
     }

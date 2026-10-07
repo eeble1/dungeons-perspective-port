@@ -107,7 +107,7 @@ public final class ContextualTargeting {
                                       Entity previousTarget,
                                       TargetingMode combatMode,
                                       TargetingInputMode inputMode) {
-        if (player == null || player.getWorld() == null || combatMode == TargetingMode.NONE) {
+        if (player == null || player.getEntityWorld() == null || combatMode == TargetingMode.NONE) {
             return null;
         }
 
@@ -288,7 +288,7 @@ public final class ContextualTargeting {
                 || (interact ? !isInteractableEntity(living) : !living.canHit())
                 || living.isSpectator()
                 || living.isInvisibleTo(player)
-                || player.getEyePos().distanceTo(living.getPos()) > range) {
+                || player.getEyePos().distanceTo(living.getEntityPos()) > range) {
             losGraceTicks = 0;
             graceTarget = null;
             return null;
@@ -326,7 +326,7 @@ public final class ContextualTargeting {
     // --- Shared scoring / filtering --------------------------------------------------------------
 
     private static List<LivingEntity> candidates(ClientPlayerEntity player, double range, boolean interact) {
-        return player.getWorld().getEntitiesByClass(
+        return player.getEntityWorld().getEntitiesByClass(
                 LivingEntity.class,
                 player.getBoundingBox().expand(range),
                 candidate -> isCandidate(player, candidate, range, interact));
@@ -341,7 +341,7 @@ public final class ContextualTargeting {
 
     /** Horizontal angular alignment (dot product) of a candidate against the aim direction. */
     private static double angularAlignment(Vec3d aimDir, Vec3d eye, Entity candidate) {
-        Vec3d toTarget = candidate.getPos().subtract(eye).multiply(1.0, 0.0, 1.0);
+        Vec3d toTarget = candidate.getEntityPos().subtract(eye).multiply(1.0, 0.0, 1.0);
         if (toTarget.lengthSquared() < 1.0e-6) {
             return -2.0; // undefined direction — never inside any cone
         }
@@ -350,7 +350,7 @@ public final class ContextualTargeting {
 
     private static double baseScore(double angularAlignment, Vec3d eye, Entity candidate,
                                     double range, double angularWeight, double distanceWeight) {
-        double distance = eye.distanceTo(candidate.getPos());
+        double distance = eye.distanceTo(candidate.getEntityPos());
         double distanceScore = 1.0 - distance / range;
         return angularAlignment * angularWeight + distanceScore * distanceWeight;
     }
@@ -369,7 +369,7 @@ public final class ContextualTargeting {
                 && !living.isSpectator()
                 && !living.isInvisibleTo(player)
                 && player.canSee(living)
-                && player.getEyePos().distanceTo(living.getPos()) <= range;
+                && player.getEyePos().distanceTo(living.getEntityPos()) <= range;
     }
 
     /**
@@ -386,7 +386,7 @@ public final class ContextualTargeting {
                 && !living.isSpectator()
                 && !living.isInvisibleTo(player)
                 && player.canSee(living)
-                && player.getEyePos().distanceTo(living.getPos()) <= range;
+                && player.getEyePos().distanceTo(living.getEntityPos()) <= range;
     }
 
     /**

@@ -89,7 +89,7 @@ public final class InteractionTargeting {
             return false;
         }
 
-        World world = player.getWorld();
+        World world = player.getEntityWorld();
 
         if (!isInteractable(world, pos)) {
             return false;
